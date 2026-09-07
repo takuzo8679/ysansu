@@ -10,7 +10,8 @@ import { formatTime } from '@/lib/formatTime';
 import { getLevels } from '@/constants/levels';
 import type { DrillRecord, Judgment, OperationType } from '@/types';
 
-// recharts を遅延ロード（履歴ページ初回アクセス時にのみ読み込み）
+// recharts コンポーネントを遅延ロード
+const DailyStudyChart = dynamic(() => import('@/components/DailyStudyChart'), { ssr: false });
 const TimeChart = dynamic(() => import('@/components/TimeChart'), { ssr: false });
 
 const OPERATION_LABELS: Record<OperationType, string> = {
@@ -126,6 +127,9 @@ export default function HistoryPage() {
             {activeUser.avatar} {activeUser.name}
           </Text>
         )}
+
+        {/* 日別学習時間グラフ */}
+        {records.length > 0 && <DailyStudyChart records={records} />}
 
         <Flex gap={1} w="100%" flexWrap="wrap">
           <Box
