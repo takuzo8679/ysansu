@@ -76,5 +76,17 @@ describe('AdditionGenerator', () => {
         }
       });
     }
+
+    if (levelDef.noCarry) {
+      it('繰り上がりなし: 各桁の和が10未満', () => {
+        for (const p of problems) {
+          const [left, right] = p.operands;
+          const onesSum = (left % 10) + (right % 10);
+          const tensSum = (Math.floor(left / 10) % 10) + (Math.floor(right / 10) % 10);
+          expect(onesSum).toBeLessThan(10);
+          expect(tensSum).toBeLessThan(10);
+        }
+      });
+    }
   });
 });

@@ -30,6 +30,8 @@ export interface LevelDefinition {
     right: { min: number; max: number };
   };
   partialTarget?: PartialTarget;
+  /** 繰り上がりなし制約（1の位・10の位それぞれで桁上がりしない問題のみ生成） */
+  noCarry?: boolean;
   description: string;
 }
 

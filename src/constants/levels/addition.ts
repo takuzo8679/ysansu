@@ -46,6 +46,7 @@ export const ADDITION_LEVELS: LevelDefinition[] = [
     questionCount: 18,
     timeLimit: { pass: 110, excellent: 70 },
     operands: { left: { min: 10, max: 99 }, right: { min: 10, max: 99 } },
+    noCarry: true,
     description: 'つぎの けいさんの 10のくらいだけを たして、1のくらいだけを たしてから こたえを もとめなさい。',
   },
   {

@@ -20,6 +20,13 @@ function generateOperands(
     // 直前と同一の問題は出題しない
     if (prev && prev[0] === left && prev[1] === right) continue;
 
+    // 繰り上がりなし制約: 各桁の和が10未満
+    if (levelDef.noCarry) {
+      const onesSum = (left % 10) + (right % 10);
+      const tensSum = (Math.floor(left / 10) % 10) + (Math.floor(right / 10) % 10);
+      if (onesSum >= 10 || tensSum >= 10) continue;
+    }
+
     return [left, right];
   }
   // フォールバック（理論上到達しない）
