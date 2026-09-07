@@ -7,8 +7,10 @@ export function judge(
 ): Judgment {
   const allCorrect = answers.every((a) => a.correct);
   if (!allCorrect) return 'fail';
-  if (totalTime <= levelDef.timeLimit.excellent) return 'excellent';
-  if (totalTime <= levelDef.timeLimit.pass) return 'pass';
+  // 秒未満切り捨てで判定（50.9秒 → 50秒として扱う）
+  const truncated = Math.floor(totalTime);
+  if (truncated <= levelDef.timeLimit.excellent) return 'excellent';
+  if (truncated <= levelDef.timeLimit.pass) return 'pass';
   return 'fail';
 }
 
@@ -19,12 +21,13 @@ export function createDrillResult(
 ): DrillResult {
   const allCorrect = answers.every((a) => a.correct);
   const correctCount = answers.filter((a) => a.correct).length;
+  const truncatedTime = Math.floor(totalTime);
 
   return {
     level: levelDef.level,
     operation: levelDef.operation,
     answers,
-    totalTime,
+    totalTime: truncatedTime,
     allCorrect,
     correctCount,
     totalCount: answers.length,

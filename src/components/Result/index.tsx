@@ -2,7 +2,7 @@
 
 import { Box, Flex, Text, VStack } from '@chakra-ui/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { Answer, DrillResult, LevelDefinition } from '@/types';
+import type { Answer, DrillRecord, DrillResult, LevelDefinition } from '@/types';
 import { formatTime } from '@/lib/formatTime';
 
 const MotionBox = motion.create(Box);
@@ -11,6 +11,7 @@ const MotionFlex = motion.create(Flex);
 interface ResultProps {
   result: DrillResult;
   levelDef: LevelDefinition;
+  prevRecord?: DrillRecord | null;
 }
 
 /** 各セクション共通のフェードイン */
@@ -78,8 +79,26 @@ function formatUserAnswer(answer: Answer): string {
   return String(answer.userAnswer);
 }
 
-function WrongAnswerRow({ answer, index }: { answer: Answer; index: number }) {
+function getCorrectDisplay(answer: Answer): string {
+  const p = answer.problem;
+  if (p.format === 'partial' && p.partialAnswer != null) {
+    return String(p.partialAnswer);
+  }
+  if (p.format === 'decomposed' && p.decomposed) {
+    return `${p.decomposed.upperDigits} + ${p.decomposed.lowerDigits} = ${p.correctAnswer}`;
+  }
+  return String(p.correctAnswer);
+}
+
+function getProblemDisplay(answer: Answer): string {
   const [left, right] = answer.problem.operands;
+  if (answer.problem.format === 'partial') {
+    return `${left} + ${right} ⇒`;
+  }
+  return `${left} + ${right} =`;
+}
+
+function WrongAnswerRow({ answer, index }: { answer: Answer; index: number }) {
   return (
     <MotionBox
       initial={{ opacity: 0, x: -20 }}
@@ -96,28 +115,48 @@ function WrongAnswerRow({ answer, index }: { answer: Answer; index: number }) {
       >
         <VStack gap={0} alignItems="flex-start">
           <Text fontSize="sm" color="gray.700">
-            {left} + {right}
+            {getProblemDisplay(answer)}
           </Text>
           <Text fontSize="xs" color="red.400">
             きみの こたえ: {formatUserAnswer(answer)}
           </Text>
         </VStack>
         <Text fontSize="sm" fontWeight="bold" color="orange.600">
-          → {answer.problem.correctAnswer}
+          → {getCorrectDisplay(answer)}
         </Text>
       </Flex>
     </MotionBox>
   );
 }
 
-export default function Result({ result, levelDef }: ResultProps) {
+export default function Result({ result, levelDef, prevRecord }: ResultProps) {
   const wrongAnswers = result.answers.filter((a) => !a.correct);
+  const isPassed = result.judgment === 'pass' || result.judgment === 'excellent';
+
+  // 前回より速くなったか（fail時のみ表示）
+  const fasterBy =
+    !isPassed && prevRecord && prevRecord.judgment === 'fail'
+      ? Math.floor(prevRecord.totalTime) - Math.floor(result.totalTime)
+      : null;
 
   return (
     <AnimatePresence>
       <VStack gap={5} w="100%" maxW="400px" mx="auto">
-        {/* 判定バッジ（即座にスケールイン） */}
+        {/* 判定バッジ */}
         <JudgmentDisplay judgment={result.judgment} />
+
+        {/* 合格メッセージ or 前回比較 */}
+        <FadeInRow delay={0.3}>
+          {isPassed ? (
+            <Text textAlign="center" fontWeight="bold" color="green.600" fontSize="md">
+              おめでとう、ごうかくだよ！
+            </Text>
+          ) : fasterBy != null && fasterBy > 0 ? (
+            <Text textAlign="center" color="blue.500" fontSize="sm">
+              ⏱ まえより {fasterBy}びょう はやくなったよ！
+            </Text>
+          ) : null}
+        </FadeInRow>
 
         {/* タイム・正答数（0.6s遅延でフェードイン） */}
         <FadeInRow delay={0.5}>
