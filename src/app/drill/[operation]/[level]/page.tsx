@@ -89,7 +89,8 @@ function DrillRunner() {
     dispatch({ type: 'START' });
   }, [dispatch]);
 
-  const handleSubmit = useCallback(() => {
+  // 手動送信（→ボタン）
+  const submitAnswer = useCallback(() => {
     if (!currentProblem) return;
 
     if (isDecomposed) {
@@ -113,17 +114,64 @@ function DrillRunner() {
     }
   }, [currentProblem, isDecomposed, decomposedValues, activeStep, value, dispatch]);
 
+  // 正解時の自動進行
+  const tryAutoAdvance = useCallback(
+    (newValue: string) => {
+      if (!currentProblem || newValue === '') return;
+
+      if (isDecomposed) {
+        // 分解回答: 現ステップの正解と一致 → 次ステップor送信
+        const expected =
+          activeStep === 0
+            ? currentProblem.decomposed?.upperDigits
+            : activeStep === 1
+              ? currentProblem.decomposed?.lowerDigits
+              : currentProblem.correctAnswer;
+        if (expected != null && Number(newValue) === expected) {
+          if (activeStep < 2) {
+            setTimeout(() => setActiveStep((s) => s + 1), 150);
+          } else {
+            // 最終ステップ → 全回答送信
+            setTimeout(() => {
+              setDecomposedValues((prev) => {
+                const nums = prev.map(Number);
+                dispatch({ type: 'SUBMIT_ANSWER', userAnswer: nums });
+                return ['', '', ''];
+              });
+              setActiveStep(0);
+            }, 150);
+          }
+        }
+      } else {
+        // 直接/部分回答: 正解と一致 → 自動送信
+        const expected =
+          currentProblem.format === 'partial'
+            ? currentProblem.partialAnswer
+            : currentProblem.correctAnswer;
+        if (expected != null && Number(newValue) === expected) {
+          setTimeout(() => {
+            dispatch({ type: 'SUBMIT_ANSWER', userAnswer: Number(newValue) });
+            setValue('');
+          }, 150);
+        }
+      }
+    },
+    [currentProblem, isDecomposed, activeStep, dispatch],
+  );
+
   const handleChange = useCallback(
     (v: string) => {
       if (isDecomposed) {
         const next = [...decomposedValues];
         next[activeStep] = v;
         setDecomposedValues(next);
+        tryAutoAdvance(v);
       } else {
         setValue(v);
+        tryAutoAdvance(v);
       }
     },
-    [isDecomposed, decomposedValues, activeStep],
+    [isDecomposed, decomposedValues, activeStep, tryAutoAdvance],
   );
 
   if (phase === 'countdown') {
@@ -173,7 +221,7 @@ function DrillRunner() {
         </Box>
 
         {/* テンキー */}
-        <Numpad value={displayValue} onChange={handleChange} onSubmit={handleSubmit} />
+        <Numpad value={displayValue} onChange={handleChange} onSubmit={submitAnswer} />
       </VStack>
     </MotionBox>
   );
