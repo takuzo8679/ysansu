@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { notFound } from 'next/navigation';
-import { Box, Text, VStack } from '@chakra-ui/react';
+import { Box, Flex, Text, VStack } from '@chakra-ui/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { isOperationType } from '@/types';
 import type { OperationType } from '@/types';
 import { getLevel } from '@/constants/levels';
@@ -61,10 +62,12 @@ function DrillRunner() {
     return () => clearInterval(id);
   }, [phase, dispatch]);
 
+  // フェードアウト状態
+  const [fadingOut, setFadingOut] = useState(false);
+
   // 結果画面遷移 + 履歴保存
   useEffect(() => {
-    if (phase === 'finished' && result) {
-      // LocalStorage に履歴保存
+    if (phase === 'finished' && result && !fadingOut) {
       addRecord({
         operation: result.operation,
         level: result.level,
@@ -75,11 +78,12 @@ function DrillRunner() {
         totalCount: result.totalCount,
         judgment: result.judgment,
       });
-      // ドリル結果を保存して結果ページへ遷移
       setResult(result);
-      router.push('/result');
+      // フェードアウト → 遷移
+      setFadingOut(true);
+      setTimeout(() => router.push('/result'), 600);
     }
-  }, [phase, result, router, addRecord, setResult]);
+  }, [phase, result, router, addRecord, setResult, fadingOut]);
 
   const handleCountdownComplete = useCallback(() => {
     dispatch({ type: 'START' });
@@ -132,8 +136,17 @@ function DrillRunner() {
 
   const displayValue = isDecomposed ? (decomposedValues[activeStep] ?? '') : value;
 
+  const MotionBox = motion.create(Box);
+
   return (
-    <Box minH="100vh" bg="white" py={4} px={3}>
+    <MotionBox
+      minH="100vh"
+      bg="white"
+      py={4}
+      px={3}
+      animate={{ opacity: fadingOut ? 0 : 1 }}
+      transition={{ duration: 0.5 }}
+    >
       <VStack gap={4} maxW="400px" mx="auto">
         {/* ヘッダー */}
         <Box w="100%" display="flex" justifyContent="flex-end" alignItems="center">
@@ -162,7 +175,7 @@ function DrillRunner() {
         {/* テンキー */}
         <Numpad value={displayValue} onChange={handleChange} onSubmit={handleSubmit} />
       </VStack>
-    </Box>
+    </MotionBox>
   );
 }
 

@@ -1,23 +1,17 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Box, Flex, Heading, Text, VStack } from '@chakra-ui/react';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceLine,
-} from 'recharts';
 import { useUser } from '@/hooks/useUser';
 import { useHistory } from '@/hooks/useStorage';
 import { formatTime } from '@/lib/formatTime';
 import { getLevels } from '@/constants/levels';
 import type { DrillRecord, Judgment, OperationType } from '@/types';
+
+// recharts を遅延ロード（履歴ページ初回アクセス時にのみ読み込み）
+const TimeChart = dynamic(() => import('@/components/TimeChart'), { ssr: false });
 
 const OPERATION_LABELS: Record<OperationType, string> = {
   addition: 'たし算',
@@ -51,96 +45,11 @@ function JudgmentBadge({ judgment }: { judgment: Judgment }) {
   );
 }
 
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  return `${d.getMonth() + 1}/${d.getDate()}`;
-}
-
 function formatDateTime(iso: string): string {
   const d = new Date(iso);
   const h = String(d.getHours()).padStart(2, '0');
   const m = String(d.getMinutes()).padStart(2, '0');
   return `${d.getMonth() + 1}/${d.getDate()} ${h}:${m}`;
-}
-
-interface ChartData {
-  name: string;
-  time: number;
-  judgment: Judgment;
-}
-
-function TimeChart({
-  records,
-  passTime,
-  excellentTime,
-}: {
-  records: DrillRecord[];
-  passTime: number;
-  excellentTime: number;
-}) {
-  const data: ChartData[] = records.map((r, i) => ({
-    name: formatDate(r.timestamp),
-    time: Math.round(r.totalTime),
-    judgment: r.judgment,
-  }));
-
-  const dotColor = (judgment: Judgment) => {
-    if (judgment === 'excellent') return '#EAB308';
-    if (judgment === 'pass') return '#9CA3AF';
-    return '#F97316';
-  };
-
-  return (
-    <Box bg="white" borderRadius="xl" boxShadow="sm" p={4} w="100%" borderWidth="1px" borderColor="gray.100">
-      <Text fontSize="sm" fontWeight="bold" color="gray.700" mb={3}>
-        ⏱ タイムのすいい
-      </Text>
-      <ResponsiveContainer width="100%" height={200}>
-        <LineChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-          <XAxis dataKey="name" fontSize={10} tick={{ fill: '#9CA3AF' }} />
-          <YAxis fontSize={10} tick={{ fill: '#9CA3AF' }} tickFormatter={(v) => `${v}s`} />
-          <Tooltip
-            formatter={(value) => [`${formatTime(Number(value))}`, 'タイム']}
-          />
-          <ReferenceLine
-            y={passTime}
-            stroke="#3B82F6"
-            strokeDasharray="4 4"
-            label={{ value: '○', position: 'right', fontSize: 12, fill: '#3B82F6' }}
-          />
-          <ReferenceLine
-            y={excellentTime}
-            stroke="#EAB308"
-            strokeDasharray="4 4"
-            label={{ value: '◎', position: 'right', fontSize: 12, fill: '#EAB308' }}
-          />
-          <Line
-            type="monotone"
-            dataKey="time"
-            stroke="#EF4444"
-            strokeWidth={2}
-            dot={(props) => {
-              const { cx, cy, index } = props as { cx?: number; cy?: number; index?: number };
-              if (cx == null || cy == null || index == null) return <></>;
-              const j = data[index]?.judgment ?? 'fail';
-              return (
-                <circle
-                  key={index}
-                  cx={cx}
-                  cy={cy}
-                  r={5}
-                  fill={dotColor(j)}
-                  stroke="white"
-                  strokeWidth={2}
-                />
-              );
-            }}
-          />
-        </LineChart>
-      </ResponsiveContainer>
-    </Box>
-  );
 }
 
 function RecordRow({ record }: { record: DrillRecord }) {
@@ -173,7 +82,6 @@ export default function HistoryPage() {
   const userId = activeUser?.id ?? 'default-user';
   const { records } = useHistory(userId);
 
-  // レベルでフィルタ（デフォルト: 全レベル）
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
   const levels = getLevels('addition');
 
@@ -185,20 +93,13 @@ export default function HistoryPage() {
     return r.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
   }, [records, selectedLevel]);
 
-  const sorted = useMemo(
-    () => [...filtered].reverse(),
-    [filtered],
-  );
+  const sorted = useMemo(() => [...filtered].reverse(), [filtered]);
 
-  // グラフ用のタイム基準
-  const levelDef = selectedLevel
-    ? levels.find((l) => l.level === selectedLevel)
-    : null;
+  const levelDef = selectedLevel ? levels.find((l) => l.level === selectedLevel) : null;
 
   return (
     <Box minH="100vh" bg="gray.50" py={6} px={4}>
       <VStack gap={4} maxW="480px" mx="auto">
-        {/* ヘッダー */}
         <Flex w="100%" alignItems="center" gap={3}>
           <Link href="/">
             <Flex
@@ -226,16 +127,11 @@ export default function HistoryPage() {
           </Text>
         )}
 
-        {/* レベルフィルタ */}
         <Flex gap={1} w="100%" flexWrap="wrap">
           <Box
             as="button"
             onClick={() => setSelectedLevel(null)}
-            px={3}
-            py={1}
-            borderRadius="full"
-            fontSize="xs"
-            fontWeight="bold"
+            px={3} py={1} borderRadius="full" fontSize="xs" fontWeight="bold"
             bg={selectedLevel === null ? 'red.500' : 'white'}
             color={selectedLevel === null ? 'white' : 'gray.600'}
             borderWidth="1px"
@@ -246,14 +142,9 @@ export default function HistoryPage() {
           </Box>
           {levels.map((l) => (
             <Box
-              as="button"
-              key={l.level}
+              as="button" key={l.level}
               onClick={() => setSelectedLevel(l.level)}
-              px={3}
-              py={1}
-              borderRadius="full"
-              fontSize="xs"
-              fontWeight="bold"
+              px={3} py={1} borderRadius="full" fontSize="xs" fontWeight="bold"
               bg={selectedLevel === l.level ? 'red.500' : 'white'}
               color={selectedLevel === l.level ? 'white' : 'gray.600'}
               borderWidth="1px"
@@ -265,7 +156,6 @@ export default function HistoryPage() {
           ))}
         </Flex>
 
-        {/* グラフ */}
         {filtered.length >= 2 && levelDef && (
           <TimeChart
             records={filtered}
@@ -274,7 +164,6 @@ export default function HistoryPage() {
           />
         )}
 
-        {/* 履歴リスト */}
         {sorted.length === 0 ? (
           <Box bg="white" borderRadius="xl" p={8} textAlign="center" w="100%" borderWidth="1px" borderColor="gray.100">
             <Text fontSize="3xl" mb={2}>📝</Text>

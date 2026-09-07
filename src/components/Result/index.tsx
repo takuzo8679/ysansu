@@ -1,15 +1,30 @@
 'use client';
 
 import { Box, Flex, Text, VStack } from '@chakra-ui/react';
-import { motion } from 'framer-motion';
-import type { DrillResult, LevelDefinition } from '@/types';
+import { motion, AnimatePresence } from 'framer-motion';
+import type { Answer, DrillResult, LevelDefinition } from '@/types';
 import { formatTime } from '@/lib/formatTime';
 
+const MotionBox = motion.create(Box);
 const MotionFlex = motion.create(Flex);
 
 interface ResultProps {
   result: DrillResult;
   levelDef: LevelDefinition;
+}
+
+/** 各セクション共通のフェードイン */
+function FadeInRow({ delay, children }: { delay: number; children: React.ReactNode }) {
+  return (
+    <MotionBox
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay, ease: 'easeOut' }}
+      w="100%"
+    >
+      {children}
+    </MotionBox>
+  );
 }
 
 function JudgmentDisplay({ judgment }: { judgment: DrillResult['judgment'] }) {
@@ -44,9 +59,9 @@ function JudgmentDisplay({ judgment }: { judgment: DrillResult['judgment'] }) {
       p={6}
       w="100%"
       gap={2}
-      initial={{ opacity: 0, scale: 0.5 }}
+      initial={{ opacity: 0, scale: 0.3 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.4, ease: 'easeOut' }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
     >
       <Text fontSize="4xl">{config.emoji}</Text>
       <Text fontSize="2xl" fontWeight="bold" color={config.color}>
@@ -56,100 +71,132 @@ function JudgmentDisplay({ judgment }: { judgment: DrillResult['judgment'] }) {
   );
 }
 
-export default function Result({ result, levelDef }: ResultProps) {
+function formatUserAnswer(answer: Answer): string {
+  if (Array.isArray(answer.userAnswer)) {
+    return answer.userAnswer.join(', ');
+  }
+  return String(answer.userAnswer);
+}
+
+function WrongAnswerRow({ answer, index }: { answer: Answer; index: number }) {
+  const [left, right] = answer.problem.operands;
   return (
-    <VStack gap={5} w="100%" maxW="400px" mx="auto">
-      <JudgmentDisplay judgment={result.judgment} />
-
+    <MotionBox
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.3, delay: 1.2 + index * 0.15 }}
+    >
       <Flex
-        bg="white"
-        borderRadius="xl"
-        boxShadow="md"
-        p={4}
-        w="100%"
-        justifyContent="space-around"
-        borderWidth="1px"
-        borderColor="gray.100"
+        justifyContent="space-between"
+        alignItems="center"
+        px={3}
+        py={2}
+        borderRadius="md"
+        bg="orange.50"
       >
-        <VStack gap={1}>
-          <Text fontSize="xs" color="gray.500">
-            タイム
+        <VStack gap={0} alignItems="flex-start">
+          <Text fontSize="sm" color="gray.700">
+            {left} + {right}
           </Text>
-          <Text fontSize="xl" fontWeight="bold" color="gray.800">
-            {formatTime(result.totalTime)}
-          </Text>
-        </VStack>
-        <Box w="1px" bg="gray.200" />
-        <VStack gap={1}>
-          <Text fontSize="xs" color="gray.500">
-            せいかい
-          </Text>
-          <Text fontSize="xl" fontWeight="bold" color="gray.800">
-            {result.correctCount}/{result.totalCount}
+          <Text fontSize="xs" color="red.400">
+            きみの こたえ: {formatUserAnswer(answer)}
           </Text>
         </VStack>
+        <Text fontSize="sm" fontWeight="bold" color="orange.600">
+          → {answer.problem.correctAnswer}
+        </Text>
       </Flex>
+    </MotionBox>
+  );
+}
 
-      {result.allCorrect ? (
-        <Box
-          bg="white"
-          borderRadius="xl"
-          boxShadow="md"
-          p={6}
-          w="100%"
-          textAlign="center"
-          borderWidth="1px"
-          borderColor="gray.100"
-        >
-          <Text fontSize="2xl" mb={1}>🎉</Text>
-          <Text fontWeight="bold" color="green.600">
-            ぜんもん せいかい！
-          </Text>
-        </Box>
-      ) : (
-        <Box
-          bg="white"
-          borderRadius="xl"
-          boxShadow="md"
-          p={4}
-          w="100%"
-          borderWidth="1px"
-          borderColor="gray.100"
-        >
-          <Text fontSize="sm" fontWeight="bold" color="gray.700" mb={3}>
-            まちがえた もんだい
-          </Text>
-          <Box maxH="200px" overflowY="auto">
-            <VStack gap={1} alignItems="stretch">
-              {result.answers
-                .filter((a) => !a.correct)
-                .map((answer, i) => (
-                  <Flex
-                    key={i}
-                    justifyContent="space-between"
-                    alignItems="center"
-                    px={3}
-                    py={2}
-                    borderRadius="md"
-                    bg="orange.50"
-                  >
-                    <Text fontSize="sm" color="gray.700">
-                      {answer.problem.operands[0]} + {answer.problem.operands[1]}
-                    </Text>
-                    <Text fontSize="sm" color="gray.500">
-                      こたえ: <Text as="span" fontWeight="bold" color="orange.600">{answer.problem.correctAnswer}</Text>
-                    </Text>
-                  </Flex>
-                ))}
+export default function Result({ result, levelDef }: ResultProps) {
+  const wrongAnswers = result.answers.filter((a) => !a.correct);
+
+  return (
+    <AnimatePresence>
+      <VStack gap={5} w="100%" maxW="400px" mx="auto">
+        {/* 判定バッジ（即座にスケールイン） */}
+        <JudgmentDisplay judgment={result.judgment} />
+
+        {/* タイム・正答数（0.6s遅延でフェードイン） */}
+        <FadeInRow delay={0.5}>
+          <Flex
+            bg="white"
+            borderRadius="xl"
+            boxShadow="md"
+            p={4}
+            w="100%"
+            justifyContent="space-around"
+            borderWidth="1px"
+            borderColor="gray.100"
+          >
+            <VStack gap={1}>
+              <Text fontSize="xs" color="gray.500">タイム</Text>
+              <Text fontSize="xl" fontWeight="bold" color="gray.800">
+                {formatTime(result.totalTime)}
+              </Text>
             </VStack>
-          </Box>
-        </Box>
-      )}
+            <Box w="1px" bg="gray.200" />
+            <VStack gap={1}>
+              <Text fontSize="xs" color="gray.500">せいかい</Text>
+              <Text fontSize="xl" fontWeight="bold" color="gray.800">
+                {result.correctCount}/{result.totalCount}
+              </Text>
+            </VStack>
+          </Flex>
+        </FadeInRow>
 
-      <Flex fontSize="xs" color="gray.400" justifyContent="center" gap={3}>
-        <Text>○タイム: {formatTime(levelDef.timeLimit.pass)}</Text>
-        <Text>◎タイム: {formatTime(levelDef.timeLimit.excellent)}</Text>
-      </Flex>
-    </VStack>
+        {/* 全問正解 or 間違い一覧（0.9s遅延でフェードイン） */}
+        <FadeInRow delay={0.9}>
+          {result.allCorrect ? (
+            <Box
+              bg="white"
+              borderRadius="xl"
+              boxShadow="md"
+              p={6}
+              w="100%"
+              textAlign="center"
+              borderWidth="1px"
+              borderColor="gray.100"
+            >
+              <Text fontSize="2xl" mb={1}>🎉</Text>
+              <Text fontWeight="bold" color="green.600">
+                ぜんもん せいかい！
+              </Text>
+            </Box>
+          ) : (
+            <Box
+              bg="white"
+              borderRadius="xl"
+              boxShadow="md"
+              p={4}
+              w="100%"
+              borderWidth="1px"
+              borderColor="gray.100"
+            >
+              <Text fontSize="sm" fontWeight="bold" color="gray.700" mb={3}>
+                まちがえた もんだい
+              </Text>
+              <Box maxH="250px" overflowY="auto">
+                <VStack gap={2} alignItems="stretch">
+                  {wrongAnswers.map((answer, i) => (
+                    <WrongAnswerRow key={i} answer={answer} index={i} />
+                  ))}
+                </VStack>
+              </Box>
+            </Box>
+          )}
+        </FadeInRow>
+
+        {/* タイム基準（最後にフェードイン） */}
+        <FadeInRow delay={1.2 + wrongAnswers.length * 0.15}>
+          <Flex fontSize="xs" color="gray.400" justifyContent="center" gap={3}>
+            <Text>○タイム: {formatTime(levelDef.timeLimit.pass)}</Text>
+            <Text>◎タイム: {formatTime(levelDef.timeLimit.excellent)}</Text>
+          </Flex>
+        </FadeInRow>
+      </VStack>
+    </AnimatePresence>
   );
 }
