@@ -30,11 +30,13 @@ function generateOperands(
 
 function getPartialAnswer(left: number, right: number, target: 'ones' | 'tens'): number {
   if (target === 'ones') {
-    // 1の位だけたす: 7+8=15
+    // 1の位だけたす: 67+28 → 7+8=15
     return (left % 10) + (right % 10);
   }
-  // 10の位だけたす: 6+2=8
-  return (Math.floor(left / 10) % 10) + (Math.floor(right / 10) % 10);
+  // 10の位だけたす: 67+28 → 60+20=80
+  const leftTens = Math.floor(left / 10) * 10 - Math.floor(left / 100) * 100;
+  const rightTens = Math.floor(right / 10) * 10 - Math.floor(right / 100) * 100;
+  return leftTens + rightTens;
 }
 
 function getDecomposed(

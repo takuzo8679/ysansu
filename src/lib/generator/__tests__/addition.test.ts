@@ -49,13 +49,13 @@ describe('AdditionGenerator', () => {
           const sum = p.correctAnswer;
           const [left, right] = p.operands;
           if (levelDef.partialTarget === 'ones') {
-            // 1の位だけたす: 7+8=15
+            // 1の位だけたす: 67+28 → 7+8=15
             expect(p.partialAnswer).toBe((left % 10) + (right % 10));
           } else {
-            // 10の位だけたす: 6+2=8
-            expect(p.partialAnswer).toBe(
-              (Math.floor(left / 10) % 10) + (Math.floor(right / 10) % 10)
-            );
+            // 10の位だけたす: 67+28 → 60+20=80
+            const leftTens = Math.floor(left / 10) * 10 - Math.floor(left / 100) * 100;
+            const rightTens = Math.floor(right / 10) * 10 - Math.floor(right / 100) * 100;
+            expect(p.partialAnswer).toBe(leftTens + rightTens);
           }
         }
       });

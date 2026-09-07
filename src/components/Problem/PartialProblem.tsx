@@ -26,8 +26,8 @@ function Example({ target }: { target: 'ones' | 'tens' }) {
     <Box bg="gray.50" borderRadius="lg" px={4} py={2}>
       <Flex fontSize="xs" color="gray.500" justify="center" align="center" gap={1} wrap="wrap">
         <Text>（れい）67 + 28 ⇒</Text>
-        <Text fontWeight="bold" color="blue.600">8</Text>
-        <Text color="gray.400">… 6+2=8</Text>
+        <Text fontWeight="bold" color="blue.600">80</Text>
+        <Text color="gray.400">… 60+20=80</Text>
       </Flex>
     </Box>
   );
