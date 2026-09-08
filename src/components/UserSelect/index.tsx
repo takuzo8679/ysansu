@@ -3,14 +3,16 @@
 import { useState } from 'react';
 import { Box, Button, Flex, Text, VStack } from '@chakra-ui/react';
 import { useUser } from '@/hooks/useUser';
+import type { UserProfile } from '@/types';
 import CreateUserModal from './CreateUserModal';
+import EditUserModal from './EditUserModal';
 
 export default function UserSelect() {
-  const { users, activeUser, createUser, switchUser } = useUser();
+  const { users, activeUser, createUser, updateUser, switchUser, deleteUser } = useUser();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editUser, setEditUser] = useState<UserProfile | null>(null);
 
-  // No users yet: show create prompt
   if (users.length === 0) {
     return (
       <>
@@ -19,14 +21,14 @@ export default function UserSelect() {
             colorPalette="red"
             size="lg"
             borderRadius="xl"
-            onClick={() => setModalOpen(true)}
+            onClick={() => setCreateOpen(true)}
           >
             ユーザーをつくる 🎉
           </Button>
         </Box>
         <CreateUserModal
-          open={modalOpen}
-          onOpenChange={(d) => setModalOpen(d.open)}
+          open={createOpen}
+          onOpenChange={(d) => setCreateOpen(d.open)}
           onCreate={createUser}
         />
       </>
@@ -36,7 +38,6 @@ export default function UserSelect() {
   return (
     <>
       <Box w="100%" position="relative">
-        {/* Active user button */}
         <Flex
           as="button"
           onClick={() => setMenuOpen((v) => !v)}
@@ -70,12 +71,9 @@ export default function UserSelect() {
           <Text fontWeight="bold" fontSize="md" color="gray.800" flex={1} textAlign="left">
             {activeUser?.name ?? 'ユーザーをえらんでね'}
           </Text>
-          <Text fontSize="sm" color="gray.400">
-            ▼
-          </Text>
+          <Text fontSize="sm" color="gray.400">▼</Text>
         </Flex>
 
-        {/* Dropdown menu */}
         {menuOpen && (
           <Box
             position="absolute"
@@ -98,52 +96,76 @@ export default function UserSelect() {
               {users.map((user) => (
                 <Flex
                   key={user.id}
-                  as="button"
-                  onClick={() => {
-                    switchUser(user.id);
-                    setMenuOpen(false);
-                  }}
                   alignItems="center"
                   gap={3}
                   px={4}
                   py={3}
-                  cursor="pointer"
                   bg={user.id === activeUser?.id ? 'red.50' : 'transparent'}
                   _hover={{ bg: user.id === activeUser?.id ? 'red.100' : 'gray.50' }}
                   transition="background 0.1s"
-                  aria-label={user.name + 'に切りかえ'}
                 >
                   <Flex
-                    w="36px"
-                    h="36px"
-                    borderRadius="full"
-                    bg={user.id === activeUser?.id ? 'red.100' : 'gray.100'}
+                    as="button"
+                    onClick={() => {
+                      switchUser(user.id);
+                      setMenuOpen(false);
+                    }}
                     alignItems="center"
-                    justifyContent="center"
-                    fontSize="lg"
-                    flexShrink={0}
+                    gap={3}
+                    flex={1}
+                    cursor="pointer"
+                    aria-label={user.name + 'に切りかえ'}
                   >
-                    {user.avatar}
+                    <Flex
+                      w="36px"
+                      h="36px"
+                      borderRadius="full"
+                      bg={user.id === activeUser?.id ? 'red.100' : 'gray.100'}
+                      alignItems="center"
+                      justifyContent="center"
+                      fontSize="lg"
+                      flexShrink={0}
+                    >
+                      {user.avatar}
+                    </Flex>
+                    <Text
+                      fontWeight={user.id === activeUser?.id ? 'bold' : 'medium'}
+                      fontSize="sm"
+                      color="gray.800"
+                    >
+                      {user.name}
+                    </Text>
                   </Flex>
-                  <Text
-                    fontWeight={user.id === activeUser?.id ? 'bold' : 'medium'}
+                  {/* 編集ボタン */}
+                  <Box
+                    as="button"
+                    onClick={(e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      setMenuOpen(false);
+                      setEditUser(user);
+                    }}
+                    px={2}
+                    py={1}
+                    borderRadius="md"
                     fontSize="sm"
-                    color="gray.800"
+                    color="gray.400"
+                    cursor="pointer"
+                    _hover={{ bg: 'gray.100', color: 'gray.600' }}
+                    transition="all 0.15s"
+                    aria-label={user.name + 'を編集'}
                   >
-                    {user.name}
-                  </Text>
+                    ✏️
+                  </Box>
                 </Flex>
               ))}
 
-              {/* Divider */}
               <Box h="1px" bg="gray.100" />
 
-              {/* Add user button */}
               <Flex
                 as="button"
                 onClick={() => {
                   setMenuOpen(false);
-                  setModalOpen(true);
+                  setCreateOpen(true);
                 }}
                 alignItems="center"
                 gap={3}
@@ -175,10 +197,25 @@ export default function UserSelect() {
       </Box>
 
       <CreateUserModal
-        open={modalOpen}
-        onOpenChange={(d) => setModalOpen(d.open)}
+        open={createOpen}
+        onOpenChange={(d) => setCreateOpen(d.open)}
         onCreate={createUser}
       />
+
+      {editUser && (
+        <EditUserModal
+          open={!!editUser}
+          user={editUser}
+          onOpenChange={(d) => {
+            if (!d.open) setEditUser(null);
+          }}
+          onSave={updateUser}
+          onDelete={(userId) => {
+            deleteUser(userId);
+            setEditUser(null);
+          }}
+        />
+      )}
     </>
   );
 }

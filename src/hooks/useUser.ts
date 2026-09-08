@@ -13,6 +13,7 @@ interface UserContextValue {
   users: UserProfile[];
   activeUser: UserProfile | null;
   createUser: (name: string, avatar: string) => void;
+  updateUser: (userId: string, name: string, avatar: string) => void;
   switchUser: (userId: string) => void;
   deleteUser: (userId: string) => void;
 }
@@ -56,6 +57,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const updateUser = useCallback((userId: string, name: string, avatar: string) => {
+    setUsers((prev) => {
+      const next = prev.map((u) => (u.id === userId ? { ...u, name, avatar } : u));
+      StorageService.set(STORAGE_KEY_USERS, next);
+      return next;
+    });
+  }, []);
+
   const switchUser = useCallback((userId: string) => {
     if (usersRef.current.some((u) => u.id === userId)) {
       setActiveUserId(userId);
@@ -80,7 +89,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   return createElement(
     UserContext.Provider,
-    { value: { users, activeUser, createUser, switchUser, deleteUser } },
+    { value: { users, activeUser, createUser, updateUser, switchUser, deleteUser } },
     children,
   );
 }
