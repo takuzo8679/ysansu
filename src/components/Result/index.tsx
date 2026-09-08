@@ -31,22 +31,34 @@ function FadeInRow({ delay, children }: { delay: number; children: React.ReactNo
 function JudgmentDisplay({ judgment }: { judgment: DrillResult['judgment'] }) {
   const config = {
     excellent: {
-      label: '◎ ごうかく！',
-      bg: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
-      color: 'yellow.900',
-      emoji: '🌟',
+      label: 'ごうかく！',
+      badge: '◎',
+      bg: 'linear-gradient(135deg, #FFD700 0%, #FF8C00 100%)',
+      badgeBg: '#FFF8DC',
+      badgeColor: '#B8860B',
+      labelColor: 'white',
+      emoji: '🌟✨🎊',
+      shadow: '0 4px 20px rgba(255, 215, 0, 0.5)',
     },
     pass: {
-      label: '○ ごうかく',
-      bg: 'linear-gradient(135deg, #C0C0C0 0%, #A8A8A8 100%)',
-      color: 'gray.800',
-      emoji: '👍',
+      label: 'ごうかく！',
+      badge: '○',
+      bg: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+      badgeBg: '#EFF6FF',
+      badgeColor: '#1D4ED8',
+      labelColor: 'white',
+      emoji: '🎉👏',
+      shadow: '0 4px 20px rgba(59, 130, 246, 0.4)',
     },
     fail: {
       label: 'もういちど がんばろう',
+      badge: '',
       bg: 'gray.100',
-      color: 'gray.600',
+      badgeBg: 'transparent',
+      badgeColor: 'transparent',
+      labelColor: 'gray.600',
       emoji: '💪',
+      shadow: 'none',
     },
   }[judgment];
 
@@ -57,15 +69,31 @@ function JudgmentDisplay({ judgment }: { judgment: DrillResult['judgment'] }) {
       justifyContent="center"
       bgGradient={config.bg}
       borderRadius="2xl"
-      p={6}
+      p={8}
       w="100%"
-      gap={2}
+      gap={3}
+      boxShadow={config.shadow}
       initial={{ opacity: 0, scale: 0.3 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
     >
-      <Text fontSize="4xl">{config.emoji}</Text>
-      <Text fontSize="2xl" fontWeight="bold" color={config.color}>
+      <Text fontSize="5xl" lineHeight={1}>{config.emoji}</Text>
+      {config.badge && (
+        <Flex
+          w="64px"
+          h="64px"
+          borderRadius="full"
+          bg={config.badgeBg}
+          alignItems="center"
+          justifyContent="center"
+          boxShadow="md"
+        >
+          <Text fontSize="4xl" fontWeight="bold" color={config.badgeColor} lineHeight={1}>
+            {config.badge}
+          </Text>
+        </Flex>
+      )}
+      <Text fontSize="2xl" fontWeight="extrabold" color={config.labelColor}>
         {config.label}
       </Text>
     </MotionFlex>
