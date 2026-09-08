@@ -13,7 +13,7 @@ interface LevelCardProps {
 function JudgmentBadge({ judgment }: { judgment: 'excellent' | 'pass' | 'fail' }) {
   const config = {
     excellent: { label: '◎', bg: '#FFD700', color: '#92400E', border: '#F59E0B' },
-    pass: { label: '○', bg: '#3B82F6', color: 'white', border: '#2563EB' },
+    pass: { label: '○', bg: '#86EFAC', color: '#166534', border: '#4ADE80' },
     fail: { label: '−', bg: 'gray.100', color: 'gray.500', border: 'gray.200' },
   }[judgment];
 

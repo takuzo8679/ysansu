@@ -43,12 +43,12 @@ function JudgmentDisplay({ judgment }: { judgment: DrillResult['judgment'] }) {
     pass: {
       label: 'ごうかく！',
       badge: '○',
-      bg: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
-      badgeBg: '#EFF6FF',
-      badgeColor: '#1D4ED8',
-      labelColor: 'white',
+      bg: 'linear-gradient(135deg, #86EFAC 0%, #4ADE80 100%)',
+      badgeBg: '#F0FDF4',
+      badgeColor: '#166534',
+      labelColor: '#14532D',
       emoji: '🎉👏',
-      shadow: '0 4px 20px rgba(59, 130, 246, 0.4)',
+      shadow: '0 4px 20px rgba(74, 222, 128, 0.4)',
     },
     fail: {
       label: 'もういちど がんばろう',

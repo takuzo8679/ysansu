@@ -24,7 +24,7 @@ const OPERATION_LABELS: Record<OperationType, string> = {
 function JudgmentBadge({ judgment }: { judgment: Judgment }) {
   const config = {
     excellent: { label: '◎', bg: '#FFD700', color: '#92400E', border: '#F59E0B' },
-    pass: { label: '○', bg: '#3B82F6', color: 'white', border: '#2563EB' },
+    pass: { label: '○', bg: '#86EFAC', color: '#166534', border: '#4ADE80' },
     fail: { label: '△', bg: 'orange.100', color: 'orange.600', border: 'orange.200' },
   }[judgment];
 
