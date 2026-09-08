@@ -12,9 +12,9 @@ interface LevelCardProps {
 
 function JudgmentBadge({ judgment }: { judgment: 'excellent' | 'pass' | 'fail' }) {
   const config = {
-    excellent: { label: '◎', bg: 'yellow.400', color: 'yellow.900' },
-    pass: { label: '○', bg: 'gray.300', color: 'gray.800' },
-    fail: { label: '−', bg: 'gray.100', color: 'gray.500' },
+    excellent: { label: '◎', bg: '#FFD700', color: '#92400E', border: '#F59E0B' },
+    pass: { label: '○', bg: '#3B82F6', color: 'white', border: '#2563EB' },
+    fail: { label: '−', bg: 'gray.100', color: 'gray.500', border: 'gray.200' },
   }[judgment];
 
   return (
@@ -24,10 +24,13 @@ function JudgmentBadge({ judgment }: { judgment: 'excellent' | 'pass' | 'fail' }
       borderRadius="full"
       bg={config.bg}
       color={config.color}
+      borderWidth="2px"
+      borderColor={config.border}
       alignItems="center"
       justifyContent="center"
       fontWeight="bold"
       fontSize="sm"
+      boxShadow={judgment !== 'fail' ? 'sm' : 'none'}
     >
       {config.label}
     </Flex>

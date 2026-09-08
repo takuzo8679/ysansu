@@ -23,9 +23,9 @@ const OPERATION_LABELS: Record<OperationType, string> = {
 
 function JudgmentBadge({ judgment }: { judgment: Judgment }) {
   const config = {
-    excellent: { label: '◎', bg: 'yellow.400', color: 'yellow.900' },
-    pass: { label: '○', bg: 'gray.300', color: 'gray.700' },
-    fail: { label: '△', bg: 'orange.100', color: 'orange.600' },
+    excellent: { label: '◎', bg: '#FFD700', color: '#92400E', border: '#F59E0B' },
+    pass: { label: '○', bg: '#3B82F6', color: 'white', border: '#2563EB' },
+    fail: { label: '△', bg: 'orange.100', color: 'orange.600', border: 'orange.200' },
   }[judgment];
 
   return (
@@ -35,11 +35,14 @@ function JudgmentBadge({ judgment }: { judgment: Judgment }) {
       borderRadius="full"
       bg={config.bg}
       color={config.color}
+      borderWidth="2px"
+      borderColor={config.border}
       alignItems="center"
       justifyContent="center"
       fontWeight="bold"
       fontSize="sm"
       flexShrink={0}
+      boxShadow={judgment !== 'fail' ? 'sm' : 'none'}
     >
       {config.label}
     </Flex>
